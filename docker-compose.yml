@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  # 1. Frontend Web App (Next.js 15)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tp_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - tp_network
+
+  # 2. Backend API Service (Node.js + TypeScript)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tp_backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=development
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=tech_passion_db
+      - MYSQL_USER=tp_user
+      - MYSQL_PASSWORD=tp_secret
+      - MONGO_URI=mongodb://tp_mongo_user:tp_mongo_secret@mongodb:27017/tech_passion_content?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=tp_super_secure_jwt_secret_key_2026_change_in_production
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - tp_network
+
+  # 3. MySQL 8.0 (ACID & Relational)
+  mysql:
+    image: mysql:8.0
+    container_name: tp_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret_password
+      MYSQL_DATABASE: tech_passion_db
+      MYSQL_USER: tp_user
+      MYSQL_PASSWORD: tp_secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - tp_mysql_data:/var/lib/mysql
+      - ./infrastructure/database/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "tp_user", "-ptp_secret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tp_network
+
+  # 4. MongoDB 7.0 (Content Documents & Analytics)
+  mongodb:
+    image: mongo:7.0
+    container_name: tp_mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: tp_mongo_user
+      MONGO_INITDB_ROOT_PASSWORD: tp_mongo_secret
+      MONGO_INITDB_DATABASE: tech_passion_content
+    ports:
+      - "27017:27017"
+    volumes:
+      - tp_mongo_data:/data/db
+    networks:
+      - tp_network
+
+  # 5. Redis 7.0 (Cache & PubSub Live News)
+  redis:
+    image: redis:7-alpine
+    container_name: tp_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - tp_redis_data:/data
+    networks:
+      - tp_network
+
+networks:
+  tp_network:
+    driver: bridge
+
+volumes:
+  tp_mysql_data:
+  tp_mongo_data:
+  tp_redis_data:
