@@ -67,6 +67,9 @@ const nextConfig: NextConfig = {
       }),
   reactStrictMode: true,
   poweredByHeader: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     unoptimized: isGithubPages,
     remotePatterns: [

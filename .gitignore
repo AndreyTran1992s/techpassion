@@ -20,5 +20,6 @@ frontend/playwright/.cache/
 !.env.example
 *.log
 npm-debug.log*
+*.tsbuildinfo
 .DS_Store
 Thumbs.db
