@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
-const isGithubPages = process.env.GITHUB_PAGES === 'true';
+const isStaticExport =
+  process.env.GITHUB_PAGES === 'true' ||
+  process.env.CF_PAGES === '1' ||
+  Boolean(process.env.NEXT_EXPORT);
 
 const securityHeaders = [
   {
@@ -48,7 +51,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  ...(isGithubPages
+  ...(isStaticExport
     ? {
         output: 'export',
         trailingSlash: true,
@@ -71,7 +74,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    unoptimized: isGithubPages,
+    unoptimized: isStaticExport,
     remotePatterns: [
       {
         protocol: 'https',
