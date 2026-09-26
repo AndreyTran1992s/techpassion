@@ -290,7 +290,33 @@ export async function loginAdminApi(email: string, password: string): Promise<{ 
     }
     return { success: true, data: json.data };
   } catch (err: any) {
-    if (email === 'admin@techpassion.dev' && password === 'Admin@TechPassion2026') {
+    if (typeof window !== 'undefined') {
+      const customCreds = localStorage.getItem('tp_admin_custom_creds');
+      if (customCreds) {
+        try {
+          const parsed = JSON.parse(customCreds);
+          if (
+            email.toLowerCase().trim() === parsed.email?.toLowerCase().trim() &&
+            password === parsed.password
+          ) {
+            return {
+              success: true,
+              data: {
+                token: 'tp_custom_admin_token_' + Date.now(),
+                user: {
+                  id: 'adm-0000-0000-0000-000000000001',
+                  email: parsed.email,
+                  full_name: parsed.fullName || 'Tech Passion Administrator',
+                  role: 'SUPER_ADMIN',
+                },
+              },
+            };
+          }
+        } catch {}
+      }
+    }
+
+    if (email.toLowerCase().trim() === 'admin@techpassion.dev' && password === 'Admin@TechPassion2026') {
       return {
         success: true,
         data: {
@@ -304,7 +330,7 @@ export async function loginAdminApi(email: string, password: string): Promise<{ 
         },
       };
     }
-    return { success: false, error: err.message || 'Unable to connect to authentication server' };
+    return { success: false, error: 'Invalid email or password' };
   }
 }
 

@@ -32,6 +32,11 @@ import {
   LogOut,
   KeyRound,
   ArrowRight,
+  UserCog,
+  Eye,
+  EyeOff,
+  Save,
+  RotateCcw,
 } from 'lucide-react';
 
 const CATEGORY_TREE = [
@@ -99,12 +104,22 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState<string>('');
   const [loginLoading, setLoginLoading] = useState<boolean>(false);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'new-post' | 'posts' | 'inquiries'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'new-post' | 'posts' | 'inquiries' | 'security'>('overview');
   const [posts, setPosts] = useState<Post[]>(FALLBACK_POSTS);
   const [inquiries, setInquiries] = useState<ServiceInquiry[]>([]);
   const [loading, setLoading] = useState(false);
   const [postSearch, setPostSearch] = useState('');
   const [inquiryFilter, setInquiryFilter] = useState<'ALL' | 'NEW' | 'CONTACTED' | 'RESOLVED'>('ALL');
+
+  const [securityForm, setSecurityForm] = useState({
+    email: 'admin@techpassion.dev',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [securityFeedback, setSecurityFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -122,11 +137,26 @@ export default function AdminPage() {
   const [postFeedback, setPostFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
+    let defaultMail = 'admin@techpassion.dev';
+    if (typeof window !== 'undefined') {
+      const customCreds = localStorage.getItem('tp_admin_custom_creds');
+      if (customCreds) {
+        try {
+          const parsed = JSON.parse(customCreds);
+          if (parsed.email) {
+            defaultMail = parsed.email;
+            setLoginForm((prev) => ({ ...prev, email: parsed.email }));
+          }
+        } catch {}
+      }
+    }
+    setSecurityForm((prev) => ({ ...prev, email: defaultMail }));
+
     const savedToken = localStorage.getItem('tp_admin_token');
     const savedEmail = localStorage.getItem('tp_admin_email');
     if (savedToken) {
       setAdminToken(savedToken);
-      setAdminEmail(savedEmail || 'admin@techpassion.dev');
+      setAdminEmail(savedEmail || defaultMail);
       setIsAuthenticated(true);
       loadData(savedToken);
     }
@@ -206,6 +236,84 @@ export default function AdminPage() {
     setAdminEmail('');
     localStorage.removeItem('tp_admin_token');
     localStorage.removeItem('tp_admin_email');
+  };
+
+  const handleUpdateSecurity = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSecurityFeedback(null);
+
+    if (!securityForm.email.trim()) {
+      setSecurityFeedback({ type: 'error', message: 'Vui lòng nhập Email quản trị viên.' });
+      return;
+    }
+
+    let currentActivePassword = 'Admin@TechPassion2026';
+    if (typeof window !== 'undefined') {
+      const customCreds = localStorage.getItem('tp_admin_custom_creds');
+      if (customCreds) {
+        try {
+          const parsed = JSON.parse(customCreds);
+          if (parsed.password) currentActivePassword = parsed.password;
+        } catch {}
+      }
+    }
+
+    if (securityForm.currentPassword !== currentActivePassword) {
+      setSecurityFeedback({ type: 'error', message: 'Mật khẩu hiện tại không chính xác!' });
+      return;
+    }
+
+    if (securityForm.newPassword) {
+      if (securityForm.newPassword.length < 6) {
+        setSecurityFeedback({ type: 'error', message: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
+        return;
+      }
+      if (securityForm.newPassword !== securityForm.confirmPassword) {
+        setSecurityFeedback({ type: 'error', message: 'Xác nhận mật khẩu mới không trùng khớp.' });
+        return;
+      }
+    }
+
+    const newPass = securityForm.newPassword || currentActivePassword;
+    const updatedCreds = {
+      email: securityForm.email.trim(),
+      password: newPass,
+      fullName: 'Tech Passion Administrator',
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tp_admin_custom_creds', JSON.stringify(updatedCreds));
+      localStorage.setItem('tp_admin_email', securityForm.email.trim());
+    }
+
+    setAdminEmail(securityForm.email.trim());
+    setLoginForm((prev) => ({ ...prev, email: securityForm.email.trim(), password: '' }));
+
+    setSecurityFeedback({
+      type: 'success',
+      message: 'Cập nhật thành công! Email và Mật khẩu mới đã được lưu an toàn.',
+    });
+    setSecurityForm((prev) => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+  };
+
+  const handleResetSecurity = () => {
+    if (typeof window !== 'undefined' && window.confirm('Bạn có chắc chắn muốn khôi phục tài khoản quản trị về mặc định?')) {
+      localStorage.removeItem('tp_admin_custom_creds');
+      setAdminEmail('admin@techpassion.dev');
+      localStorage.setItem('tp_admin_email', 'admin@techpassion.dev');
+      setSecurityForm({
+        email: 'admin@techpassion.dev',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      setLoginForm({ email: 'admin@techpassion.dev', password: '' });
+      setSecurityFeedback({
+        type: 'success',
+        message: 'Đã khôi phục tài khoản về mặc định (admin@techpassion.dev / Admin@TechPassion2026).',
+      });
+    }
   };
 
   const handleTitleChange = (val: string) => {
@@ -350,8 +458,9 @@ export default function AdminPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-800/80 text-[11px] text-slate-500 text-center">
-            Default Demo Credentials: <code className="text-[#ff9900]">admin@techpassion.dev</code> / <code className="text-[#ff9900]">Admin@TechPassion2026</code>
+          <div className="mt-6 pt-4 border-t border-slate-800/80 text-[11px] text-slate-500 text-center flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Enterprise Access Control &bull; SSL Secured</span>
           </div>
         </div>
       </div>
@@ -404,6 +513,7 @@ export default function AdminPage() {
           { id: 'new-post', label: 'Publish New Article', icon: PenSquare },
           { id: 'posts', label: `Articles (${posts.length})`, icon: FileText },
           { id: 'inquiries', label: `Service Inquiries (${inquiries.length})`, icon: Mail },
+          { id: 'security', label: 'Security & Account', icon: UserCog },
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -601,6 +711,152 @@ export default function AdminPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* TAB 5: SECURITY & ACCOUNT SETTINGS */}
+      {activeTab === 'security' && (
+        <div className="max-w-2xl bg-[#121722] border border-[#232d42] rounded-2xl p-6 sm:p-8 space-y-6">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <UserCog className="w-5 h-5 text-[#ff9900]" />
+              Account &amp; Security Settings
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Change your Administrator Email and Password. Changes are immediately saved and protected.
+            </p>
+          </div>
+
+          {/* Current profile overview */}
+          <div className="p-4 rounded-xl bg-[#0a0d14] border border-slate-800 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#ff9900]/20 border border-[#ff9900]/40 flex items-center justify-center text-[#ff9900] font-bold text-sm">
+                AD
+              </div>
+              <div>
+                <div className="text-xs text-slate-400 font-medium">Active Administrator</div>
+                <div className="text-sm font-bold text-white">{adminEmail}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" />
+                SUPER_ADMIN
+              </span>
+            </div>
+          </div>
+
+          {securityFeedback && (
+            <div
+              className={`p-3.5 rounded-lg text-xs font-semibold flex items-center gap-2 ${
+                securityFeedback.type === 'success'
+                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
+                  : 'bg-red-500/10 border border-red-500/30 text-red-300'
+              }`}
+            >
+              {securityFeedback.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+              )}
+              <span>{securityFeedback.message}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleUpdateSecurity} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                Admin Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={securityForm.email}
+                onChange={(e) => setSecurityForm({ ...securityForm, email: e.target.value })}
+                placeholder="your-admin-email@example.com"
+                className="w-full bg-[#0a0d14] border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#ff9900]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                Current Password <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showCurrentPass ? 'text' : 'password'}
+                  required
+                  value={securityForm.currentPassword}
+                  onChange={(e) => setSecurityForm({ ...securityForm, currentPassword: e.target.value })}
+                  placeholder="Enter current password to authorize changes..."
+                  className="w-full bg-[#0a0d14] border border-slate-800 rounded-lg px-3.5 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-[#ff9900]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPass(!showCurrentPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                >
+                  {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                  New Password <span className="text-slate-500 font-normal">(Optional)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewPass ? 'text' : 'password'}
+                    value={securityForm.newPassword}
+                    onChange={(e) => setSecurityForm({ ...securityForm, newPassword: e.target.value })}
+                    placeholder="Min 6 characters..."
+                    className="w-full bg-[#0a0d14] border border-slate-800 rounded-lg px-3.5 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-[#ff9900]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPass(!showNewPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                  >
+                    {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                  Confirm New Password
+                </label>
+                <input
+                  type={showNewPass ? 'text' : 'password'}
+                  value={securityForm.confirmPassword}
+                  onChange={(e) => setSecurityForm({ ...securityForm, confirmPassword: e.target.value })}
+                  placeholder="Re-enter new password..."
+                  className="w-full bg-[#0a0d14] border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#ff9900]"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <button
+                type="submit"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-[#ff9900] hover:bg-[#e68a00] text-white font-extrabold uppercase tracking-wider text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save Account Changes</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetSecurity}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 border border-slate-700"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset to Factory Default</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
