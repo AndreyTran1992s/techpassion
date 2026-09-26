@@ -88,9 +88,13 @@ export const FALLBACK_POSTS: Post[] = [
 ];
 
 export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T | null> {
+  if (process.env.GITHUB_PAGES === 'true') {
+    return getFallback<T>(endpoint);
+  }
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
+      signal: AbortSignal.timeout(2000),
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -110,7 +114,87 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
   }
 }
 
+export const FALLBACK_CLUSTERS: ClusterMenu[] = [
+  {
+    cluster: 'TECH_CORE',
+    cluster_name: 'Tech Core',
+    categories: [
+      { id: 1, parent_id: null, cluster: 'TECH_CORE', name: 'Breaking News', slug: 'breaking-news', sort_order: 1 },
+      { id: 2, parent_id: null, cluster: 'TECH_CORE', name: 'AI', slug: 'ai', sort_order: 2 },
+      {
+        id: 3,
+        parent_id: null,
+        cluster: 'TECH_CORE',
+        name: 'Design & Development',
+        slug: 'design-development',
+        sort_order: 3,
+        children: [
+          { id: 7, parent_id: 3, cluster: 'TECH_CORE', name: 'Website Design', slug: 'website-design', sort_order: 1 },
+          { id: 8, parent_id: 3, cluster: 'TECH_CORE', name: 'Website Development', slug: 'website-development', sort_order: 2 },
+        ],
+      },
+      { id: 4, parent_id: null, cluster: 'TECH_CORE', name: 'Programming', slug: 'programming', sort_order: 4 },
+      {
+        id: 5,
+        parent_id: null,
+        cluster: 'TECH_CORE',
+        name: 'Hacking & Security',
+        slug: 'hacking-security',
+        sort_order: 5,
+        children: [
+          { id: 9, parent_id: 5, cluster: 'TECH_CORE', name: 'Hacking', slug: 'hacking', sort_order: 1 },
+          { id: 10, parent_id: 5, cluster: 'TECH_CORE', name: 'Security', slug: 'security', sort_order: 2 },
+        ],
+      },
+      {
+        id: 6,
+        parent_id: null,
+        cluster: 'TECH_CORE',
+        name: 'Testing',
+        slug: 'testing',
+        sort_order: 6,
+        children: [
+          { id: 11, parent_id: 6, cluster: 'TECH_CORE', name: 'Auto Testing', slug: 'auto-testing', sort_order: 1 },
+          { id: 12, parent_id: 6, cluster: 'TECH_CORE', name: 'Manual Testing', slug: 'manual-testing', sort_order: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    cluster: 'SKILLS_GROWTH',
+    cluster_name: 'Skills & Growth',
+    categories: [
+      {
+        id: 13,
+        parent_id: null,
+        cluster: 'SKILLS_GROWTH',
+        name: 'S.E.O/Marketing',
+        slug: 'seo-marketing',
+        sort_order: 7,
+        children: [
+          { id: 17, parent_id: 13, cluster: 'SKILLS_GROWTH', name: 'S.E.O', slug: 'seo', sort_order: 1 },
+          { id: 18, parent_id: 13, cluster: 'SKILLS_GROWTH', name: 'Marketing', slug: 'marketing', sort_order: 2 },
+        ],
+      },
+      { id: 14, parent_id: null, cluster: 'SKILLS_GROWTH', name: 'Soft Skills', slug: 'soft-skills', sort_order: 8 },
+      { id: 15, parent_id: null, cluster: 'SKILLS_GROWTH', name: 'Tricks', slug: 'tricks', sort_order: 9 },
+      { id: 16, parent_id: null, cluster: 'SKILLS_GROWTH', name: 'Tips', slug: 'tips', sort_order: 10 },
+    ],
+  },
+  {
+    cluster: 'RESOURCES_SERVICES',
+    cluster_name: 'Resources & Services',
+    categories: [
+      { id: 19, parent_id: null, cluster: 'RESOURCES_SERVICES', name: 'Product & Services', slug: 'product-services', sort_order: 11 },
+      { id: 20, parent_id: null, cluster: 'RESOURCES_SERVICES', name: 'E-Books', slug: 'ebooks', sort_order: 12 },
+    ],
+  },
+];
+
 function getFallback<T>(endpoint: string): T | null {
+  if (endpoint.includes('/categories')) {
+    return (FALLBACK_CLUSTERS as any) || [];
+  }
   if (endpoint.includes('/posts/')) {
     const slug = endpoint.split('/posts/')[1];
     const found = FALLBACK_POSTS.find((p) => p.slug === slug);
@@ -120,24 +204,6 @@ function getFallback<T>(endpoint: string): T | null {
     return (FALLBACK_POSTS as any) || [];
   }
   return null;
-}
-
-export interface CategoryItem {
-  id: number;
-  parent_id: number | null;
-  cluster: 'TECH_CORE' | 'SKILLS_GROWTH' | 'RESOURCES_SERVICES';
-  name: string;
-  slug: string;
-  description?: string;
-  icon?: string;
-  sort_order: number;
-  children?: CategoryItem[];
-}
-
-export interface ClusterMenu {
-  cluster: 'TECH_CORE' | 'SKILLS_GROWTH' | 'RESOURCES_SERVICES';
-  cluster_name: string;
-  categories: CategoryItem[];
 }
 
 export interface Post {
