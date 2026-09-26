@@ -5,12 +5,12 @@ color 0B
 cd /d "%~dp0"
 
 echo ===================================================
-echo   PUSH SOURCE CODE TO GITHUB (techpassion)
+echo   PUSH SOURCE CODE TO GITHUB (andreytran1992s.github.io)
 echo ===================================================
 echo.
 
 git branch -M main
-git remote set-url origin https://github.com/AndreyTran1992s/techpassion.git
+git remote set-url origin https://github.com/AndreyTran1992s/andreytran1992s.github.io.git
 
 echo Dang thuc hien git push len GitHub...
 echo (Neu co hop thoai hien len, hay chon Sign in with your browser)
@@ -26,16 +26,8 @@ echo ===================================================
 echo   [THANH CONG] SOURCE CODE DA DUOC PUSH LEN GITHUB!
 echo ===================================================
 echo.
-echo Cac buoc tiep theo de bat GitHub Pages:
-echo.
-echo 1. Mo link cai dat:
-echo    https://github.com/AndreyTran1992s/techpassion/settings/pages
-echo.
-echo 2. Tai muc "Build and deployment" - "Source", chon:
-echo    GitHub Actions
-echo.
-echo 3. Cho khoang 1 phut, website se hoat dong tai:
-echo    https://AndreyTran1992s.github.io/techpassion/
+echo Website se hoat dong tai dia chi ngan gon:
+echo    https://andreytran1992s.github.io/
 echo ===================================================
 pause
 exit /b 0

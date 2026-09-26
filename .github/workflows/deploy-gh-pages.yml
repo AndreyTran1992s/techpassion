@@ -44,7 +44,7 @@ jobs:
         working-directory: ./frontend
         env:
           GITHUB_PAGES: 'true'
-          NEXT_PUBLIC_BASE_PATH: /techpassion
+          NEXT_PUBLIC_BASE_PATH: ''
         run: npm run build
 
       - name: Create .nojekyll in out directory
