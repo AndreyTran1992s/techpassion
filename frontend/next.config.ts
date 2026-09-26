@@ -55,7 +55,7 @@ const nextConfig: NextConfig = {
         basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
       }
     : {
-        distDir: '.next-app',
+        ...(process.env.VERCEL ? {} : { distDir: '.next-app' }),
         async headers() {
           return [
             {
