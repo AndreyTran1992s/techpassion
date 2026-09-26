@@ -1,9 +1,8 @@
 import type { NextConfig } from 'next';
 
-const isStaticExport =
-  process.env.GITHUB_PAGES === 'true' ||
-  process.env.CF_PAGES === '1' ||
-  Boolean(process.env.NEXT_EXPORT);
+const isVercel = Boolean(process.env.VERCEL);
+const isDev = process.env.NODE_ENV === 'development';
+const isStaticExport = !isVercel && !isDev;
 
 const securityHeaders = [
   {
