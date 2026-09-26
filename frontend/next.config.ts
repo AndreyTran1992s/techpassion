@@ -48,7 +48,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  distDir: '.next-app',
   ...(isGithubPages
     ? {
         output: 'export',
@@ -56,6 +55,7 @@ const nextConfig: NextConfig = {
         basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
       }
     : {
+        distDir: '.next-app',
         async headers() {
           return [
             {

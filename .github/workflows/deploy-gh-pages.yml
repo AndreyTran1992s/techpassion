@@ -34,6 +34,12 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
+      - name: Prepare Frontend for Static Export
+        working-directory: ./frontend
+        run: |
+          rm -f src/middleware.ts
+          rm -rf src/app/rss.xml
+
       - name: Build Static Site for GitHub Pages
         working-directory: ./frontend
         env:
