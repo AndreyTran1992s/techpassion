@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ClusterMenu } from '@/lib/api';
-import { Search, Menu, X, ChevronDown, Zap, Twitter, Facebook, Github, ShieldCheck, Globe } from 'lucide-react';
+import { Search, Menu, X, ChevronDown, Zap, Twitter, Facebook, Github, Globe } from 'lucide-react';
 import { useLanguage, Language } from '@/context/LanguageContext';
 
 interface HeaderProps {
@@ -124,9 +124,6 @@ export function Header({ clusters }: HeaderProps) {
             </Link>
             <Link href="/product-services" className="hover:text-[#ff9900] transition-colors">
               {t.services}
-            </Link>
-            <Link href="/admin" className="text-[#ff9900] hover:underline flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" /> {t.admin}
             </Link>
           </nav>
         </div>
