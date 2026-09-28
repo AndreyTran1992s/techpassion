@@ -101,6 +101,7 @@ export default function AdminPage() {
   const [adminToken, setAdminToken] = useState<string>('');
   const [adminEmail, setAdminEmail] = useState<string>('');
   const [loginForm, setLoginForm] = useState({ email: 'admin@techpassion.dev', password: '' });
+  const [showLoginPass, setShowLoginPass] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string>('');
   const [loginLoading, setLoginLoading] = useState<boolean>(false);
 
@@ -139,16 +140,19 @@ export default function AdminPage() {
   useEffect(() => {
     let defaultMail = 'admin@techpassion.dev';
     if (typeof window !== 'undefined') {
+      if (window.location.hostname.includes('vercel.app')) {
+        defaultMail = 'admin@techpassion-rho.vercel.app';
+      }
       const customCreds = localStorage.getItem('tp_admin_custom_creds');
       if (customCreds) {
         try {
           const parsed = JSON.parse(customCreds);
           if (parsed.email) {
             defaultMail = parsed.email;
-            setLoginForm((prev) => ({ ...prev, email: parsed.email }));
           }
         } catch {}
       }
+      setLoginForm((prev) => ({ ...prev, email: defaultMail }));
     }
     setSecurityForm((prev) => ({ ...prev, email: defaultMail }));
 
@@ -247,19 +251,34 @@ export default function AdminPage() {
       return;
     }
 
-    let currentActivePassword = 'Admin@TechPassion2026';
+    const defaultValidPasswords = [
+      'Admin@TechPassion2026',
+      'Admin@techpassion.dev',
+      'Admin@techpassion-rho.vercel.app',
+      'Admin@techpassion.pages.dev',
+    ];
+
+    let customSavedPassword = '';
     if (typeof window !== 'undefined') {
       const customCreds = localStorage.getItem('tp_admin_custom_creds');
       if (customCreds) {
         try {
           const parsed = JSON.parse(customCreds);
-          if (parsed.password) currentActivePassword = parsed.password;
+          if (parsed.password) customSavedPassword = parsed.password;
         } catch {}
       }
     }
 
-    if (securityForm.currentPassword !== currentActivePassword) {
-      setSecurityFeedback({ type: 'error', message: 'Mật khẩu hiện tại không chính xác!' });
+    const isCurrentPasswordCorrect = customSavedPassword
+      ? securityForm.currentPassword === customSavedPassword
+      : defaultValidPasswords.includes(securityForm.currentPassword);
+
+    if (!isCurrentPasswordCorrect) {
+      setSecurityFeedback({
+        type: 'error',
+        message:
+          'Mật khẩu hiện tại không chính xác! (Gợi ý: Nếu chưa đổi mật khẩu lần nào, hãy dùng Admin@techpassion.dev hoặc Admin@techpassion-rho.vercel.app hoặc Admin@TechPassion2026)',
+      });
       return;
     }
 
@@ -274,7 +293,7 @@ export default function AdminPage() {
       }
     }
 
-    const newPass = securityForm.newPassword || currentActivePassword;
+    const newPass = securityForm.newPassword || customSavedPassword || securityForm.currentPassword;
     const updatedCreds = {
       email: securityForm.email.trim(),
       password: newPass,
@@ -438,14 +457,23 @@ export default function AdminPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
                 Security Password
               </label>
-              <input
-                type="password"
-                required
-                value={loginForm.password}
-                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                placeholder="Enter administrator password..."
-                className="w-full bg-[#0a0d14] border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#ff9900]"
-              />
+              <div className="relative">
+                <input
+                  type={showLoginPass ? 'text' : 'password'}
+                  required
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                  placeholder="Enter administrator password..."
+                  className="w-full bg-[#0a0d14] border border-slate-800 rounded-lg px-3.5 py-2.5 pr-10 text-xs text-white focus:outline-none focus:border-[#ff9900]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPass(!showLoginPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                >
+                  {showLoginPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button

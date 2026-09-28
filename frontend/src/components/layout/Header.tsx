@@ -49,7 +49,13 @@ export function TechPassionBrandLogo({ size = 'large' }: { size?: 'large' | 'sma
       </div>
 
       <div
-        className={`font-extrabold uppercase text-neutral-200 tracking-[0.32em] sm:tracking-[0.38em] text-center mt-1 ${
+        onClick={(e) => {
+          if (e.detail === 2) {
+            window.location.href = '/admin';
+          }
+        }}
+        title="Double-click to access Admin"
+        className={`font-extrabold uppercase text-neutral-200 tracking-[0.32em] sm:tracking-[0.38em] text-center mt-1 cursor-pointer select-none ${
           isLarge ? 'text-[8px] sm:text-[10px]' : 'text-[6.5px]'
         }`}
       >
@@ -69,6 +75,20 @@ export function Header({ clusters }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { lang, setLang, t, getLocalizedCategoryName } = useLanguage();
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) ||
+        (e.altKey && (e.key === 'a' || e.key === 'A'))
+      ) {
+        e.preventDefault();
+        window.location.href = '/admin';
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const otherCategories = clusters
     .flatMap((c) => c.categories)
